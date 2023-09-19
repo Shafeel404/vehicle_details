@@ -24,8 +24,8 @@ public class SecurityConfiguration {
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		http.csrf().disable().authorizeHttpRequests().requestMatchers(new AntPathRequestMatcher("/api/v1/auth/**"))
-				.permitAll().anyRequest().authenticated().and().sessionManagement()
-				.sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
+				.permitAll().requestMatchers(new AntPathRequestMatcher("/user/hello")).permitAll().anyRequest()
+				.authenticated().and().sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
 				.authenticationProvider(authenticationProvider)
 				.addFilterBefore(JwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 

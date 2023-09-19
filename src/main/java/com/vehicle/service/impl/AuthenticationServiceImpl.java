@@ -1,16 +1,11 @@
 package com.vehicle.service.impl;
 
-import java.util.Optional;
-
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.vehicle.common.exception.UserAlreadyExistsException;
-import com.vehicle.common.exception.UserNotEnabledException;
-import com.vehicle.common.exception.UserNotExistException;
 import com.vehicle.email.EmailSender;
 import com.vehicle.jwt.EmailValidator;
 import com.vehicle.jwt.JwtService;
@@ -63,8 +58,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 				userTokenARepository.save(userToken);
 				String link = "http://localhost:9443/api/v1/auth/confirm-user?token=" + jwtToken;
 				emailSender.sendEmail(request.getEmail(), buildEmail(request.getName(), link));
-				return AuthenticationResponse.builder()
-						.response("User Created. Please confirm email and token is " + jwtToken).build();
+				return AuthenticationResponse.builder().response("User Created. Please confirm email ").build();
 			}
 			throw new IllegalStateException("Email not valid");
 
@@ -76,22 +70,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 	@Override
 	public AuthenticationResponse authenticate(AuthenticationRequest request) {
 
-		try {
-			authenticationManager
-					.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
-		} catch (AuthenticationException e) {
+		authenticationManager
+				.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
 
-			System.out.println("some error occured");
-		}
-
-		Optional<User> user = repository.findByEmail(request.getEmail());
-		if (user.isEmpty()) {
-			throw new UserNotExistException("User Not Exist");
-		}
-		if (user.get().getEnabled() == false) {
-			throw new UserNotEnabledException("User Not Enabled");
-		}
-		var jwtToken = jwtService.generateToken(user.get());
+		var user = repository.findByEmail(request.getEmail()).orElseThrow();
+		var jwtToken = jwtService.generateToken(user);
 		return AuthenticationResponse.builder().token(jwtToken).build();
 
 	}
